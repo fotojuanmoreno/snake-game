@@ -1,6 +1,7 @@
 import turtle
 import time
 import random
+import sqlite3
 
 pospouse = 0.06
 
@@ -45,6 +46,25 @@ text.goto(0, 269)
 text.write("Score: {} 	High Score: {}".format(score, high_score), align = "center", font = ("Courier", 24, "normal"))
 
 #Functions
+def coge_dato():
+	with sqlite3.connect("data") as conn:
+		cursor = conn.cursor()
+		query = 'SELECT PUNTUACION FROM PUNTUACIONES ORDER BY PUNTUACION DESC'
+		result = cursor.execute(query)
+		datos = result.fetchone()
+		dato = (datos[0])
+		conn.commit()
+	return dato
+
+def mete_dato(puntuacion):
+	date = time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime())
+	with sqlite3.connect("data") as conn:
+		cursor = conn.cursor()
+		#query = ('INSERT INTO PUNTUACIONES VALUES (?,?)', date, score)
+		contenido = date, puntuacion
+		result = cursor.execute('INSERT INTO PUNTUACIONES VALUES (?, ?)', contenido)
+		conn.commit()
+
 def top():
 	if serpiente.direction != "down":
 		serpiente.direction = "up"
@@ -74,16 +94,27 @@ def mov():
 
 def dead():
 	global score
+	global pospouse
+	global high_score
+
+	mete_dato(score)
 	time.sleep(1)
 	serpiente.goto(0, 0)
 	serpiente.direction = "stop"	
+
 	for i in snake:
 		i.clear()
 		i.hideturtle()
 	snake.clear()
+
 	score = 0
+	pospouse = 0.06
+
 	text.clear()
 	text.write("Score: {} 	High Score: {}".format(score, high_score), align = "center", font = ("Courier", 24, "normal"))
+	
+	coge_dato()
+	high_score = coge_dato()
 
 
 #Keys
@@ -93,9 +124,11 @@ screen.onkeypress(bottom, "Down")
 screen.onkeypress(left, "Left")
 screen.onkeypress(right, "Right")
 
+high_score = coge_dato()
+
 while True:
 	screen.update()
-	
+
 	#colisiones border
 	if serpiente.xcor() > 290 or serpiente.xcor() < -290 or serpiente.ycor() > 290 or serpiente.ycor() < -290:
 		dead()
@@ -122,9 +155,6 @@ while True:
 			pospouse = pospouse - 0.0005
 			print(pospouse)
 	
-
-
-
 		text.clear()
 		text.write("Score: {} 	High Score: {}".format(score, high_score), align = "center", font = ("Courier", 24, "normal"))
 
@@ -146,8 +176,6 @@ while True:
 		if i.distance(serpiente) < 10:
 			dead()
 
-
-	
 	time.sleep(pospouse)
 
 
